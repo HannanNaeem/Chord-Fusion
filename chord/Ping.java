@@ -12,12 +12,17 @@ public class Ping implements Runnable {
 	public void run() {
 		while(true) {
 			try {
-				if (parent.succ != null && parent.succ.id.compareTo(parent.me.id) != 0) {
+				if (parent.succ != null && parent.succ.id != parent.me.id) {
+					System.out.println("======" + parent.me +"=======");
+					System.out.println("PRED: " + parent.pred);
+					System.out.println("SUCC: " + parent.succ);
+					System.out.println("=============");
 					parent.mySender.ping(Message.getPingMessage(parent.me), parent.succ);
 				}
 
-				Thread.sleep(2000);
+				Thread.sleep(5000);
 			} catch (Exception e) {
+				e.printStackTrace();
 				System.out.println("Ping Failed");
 			}
 		}

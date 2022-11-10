@@ -13,9 +13,9 @@ class NodeInfo implements Serializable {
     static final long serialVersionUID=1L;
 
     int port;
-    BigInteger id;
+    int id;
 
-    NodeInfo(int port, BigInteger id) {
+    NodeInfo(int port, int id) {
         this.port = port;
         this.id = id;
     }
@@ -59,7 +59,9 @@ public class Chord implements Runnable{
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] messageDigest = md.digest(Integer.toString(port).getBytes());
 
-            this.me = new NodeInfo(port, new BigInteger(1, messageDigest));
+            this.me = new NodeInfo(
+                port,
+                (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, 30))))).intValue());
 
         } catch (NoSuchAlgorithmException e) {
             System.out.println("No Algo Exception");
@@ -71,7 +73,7 @@ public class Chord implements Runnable{
             this.pred = new NodeInfo(port, this.me.id);
             this.succ = new NodeInfo(port, this.me.id);
         } else {
-            NodeInfo fc = new NodeInfo(firstContactPort, null);
+            NodeInfo fc = new NodeInfo(firstContactPort, -1);
             mySender.sendJoinRequest(Message.getJoinrequest(this.me, fc, true), fc);
         }
 
@@ -85,22 +87,27 @@ public class Chord implements Runnable{
 
 
     public void isSuccCorrect(NodeInfo sucPredInfo) {
-        if (sucPredInfo.id.compareTo(this.me.id) != 0) {
-            System.out.println("I AM NOT THE RIGHT PRED");
 
+        if (sucPredInfo.id > this.me.id && sucPredInfo.id < this.succ.id) {
+            System.out.println("I AM NOT THE RIGHT PRED");
             this.succ = sucPredInfo;
-            mySender.sendNotify(Message.getNotifyMessage(this.me), sucPredInfo);
         }
+        mySender.sendNotify(Message.getNotifyMessage(this.me), this.succ);
     }
 
-    public NodeInfo amISucc(NodeInfo query) {
-        if (me.id.compareTo(succ.id) == 0 && me.id.compareTo(pred.id) == 0) {
+    public void handlePong(NodeInfo sucPredInfo) {
+        isSuccCorrect(sucPredInfo);
+    }
+
+    public NodeInfo findSuccessor(NodeInfo query) {
+        if (me.id == succ.id && me.id == pred.id) {
             return this.me;
         }
 
-        if ((query.id.compareTo(this.me.id) == 0 || query.id.compareTo(this.me.id) == -1) && query.id.compareTo(this.pred.id) == 1) {
-            return this.me;
+        if (query.id == this.succ.id || (query.id < this.succ.id && query.id > this.me.id)) {
+            return this.succ;
         }
+
         return null; 
     }
 
@@ -111,14 +118,15 @@ public class Chord implements Runnable{
             // req.firstContact.id = this.me.id;
         }
 
-        NodeInfo succ = amISucc(req.sender);
+        NodeInfo succ = findSuccessor(req.sender);
 
         if (succ == null) {
             this.mySender.sendJoinRequest(req, this.succ);
+            return;
         }
 
         // send successor
-        this.mySender.retLookupRes(Message.getLookupMessage(succ, this.pred, false), req.sender);
+        this.mySender.retLookupRes(Message.getLookupMessage(succ, this.me, false), req.sender);
     }
 
     public void setSucc(Message req) {
@@ -129,10 +137,11 @@ public class Chord implements Runnable{
 
 
     public void handleNotify(NodeInfo newPred) {
+        System.out.println("NOTIFY");
         this.pred = newPred;
 
         // SPECIAL CASE WHEN N = 2 
-        if (this.me.id.compareTo(this.succ.id) == 0) {
+        if (this.me.id == this.succ.id) {
             this.succ = newPred;
         }
     }
