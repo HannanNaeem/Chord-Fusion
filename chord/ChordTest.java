@@ -80,15 +80,22 @@ public class ChordTest {
     @Test
     public void TestStartNewNet(){
 
-        Chord first = new Chord("127.0.0.1", 1100, null);
-        assertFalse("Succ: " + first.succ.id + " not same as me: " + first.me.id, first.succ.id != first.me.id);
-        assertFalse("Pred: " + first.pred.id + " not same as me: " + first.me.id, first.pred.id != first.me.id);
+        // Chord first = new Chord("127.0.0.1", 1100, null);
+        // assertFalse("Succ: " + first.succ.id + " not same as me: " + first.me.id, first.succ.id != first.me.id);
+        // assertFalse("Pred: " + first.pred.id + " not same as me: " + first.me.id, first.pred.id != first.me.id);
 
-        System.out.println("Second Joining!");
+        // System.out.println("Second Joining!");
 
-        Chord second = new Chord("127.0.0.1", 1101, 1100);
-
+        // Chord second = new Chord("127.0.0.1", 1101, 1100);
+        // Chord third = new Chord("127.0.0.1", 1102, 1100);
         
+        for (int i = 0; i < 10; i++) {
+            new Chord("127.0.0.1", 1100 + i, i == 0 ? null : 1100);
+            try {
+                Thread.sleep(300);
+            } catch (Exception e){}
+        }
+
         System.out.println("Passed!");
         while(true){}
 

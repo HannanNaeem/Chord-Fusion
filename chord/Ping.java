@@ -16,7 +16,7 @@ public class Ping implements Runnable {
 					parent.mySender.ping(Message.getPingMessage(parent.me), parent.succ);
 				}
 
-				Thread.sleep(5000);
+				Thread.sleep(2000);
 			} catch (Exception e) {
 				System.out.println("Ping Failed");
 			}

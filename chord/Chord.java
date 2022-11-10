@@ -81,7 +81,6 @@ public class Chord implements Runnable{
 
     @Override
     public void run(){
-        //Your code here
     }
 
 
@@ -109,13 +108,13 @@ public class Chord implements Runnable{
     public void Join(Message req) {
         if (req.firstReq == true) {
             req.firstReq = false;
-            req.firstContact.id = this.me.id;
+            // req.firstContact.id = this.me.id;
         }
 
         NodeInfo succ = amISucc(req.sender);
 
         if (succ == null) {
-            // FWD req to succ;
+            this.mySender.sendJoinRequest(req, this.succ);
         }
 
         // send successor

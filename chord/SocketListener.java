@@ -43,10 +43,9 @@ public class SocketListener implements Runnable {
 						// QUERY RESULT
 					}
 				} else if (msg.msgType.equals("PING")) {
-					System.out.println("PING: FROM " + msg.sender + " TO " + parent.me);
-					System.out.println("PRED: " + parent.pred);
+					System.out.println("PING: FROM " + msg.sender.port + " TO " + parent.me.port);
+					System.out.println("IS SUCC CORRECT: " + msg.sender.id.compareTo(parent.me.id));
 					parent.mySender.sendPred(Message.getPongMessage(parent.pred), msg.sender);
-
 				} else if (msg.msgType.equals("PONG")) {
 					parent.isSuccCorrect(msg.pred);
 				} else if (msg.msgType.equals("NOTIFY")) {
