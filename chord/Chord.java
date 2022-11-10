@@ -84,6 +84,16 @@ public class Chord implements Runnable{
         //Your code here
     }
 
+
+    public void isSuccCorrect(NodeInfo sucPredInfo) {
+        if (sucPredInfo.id.compareTo(this.me.id) != 0) {
+            System.out.println("I AM NOT THE RIGHT PRED");
+
+            this.succ = sucPredInfo;
+            mySender.sendNotify(Message.getNotifyMessage(this.me), sucPredInfo);
+        }
+    }
+
     public NodeInfo amISucc(NodeInfo query) {
         if (me.id.compareTo(succ.id) == 0 && me.id.compareTo(pred.id) == 0) {
             return this.me;
@@ -92,9 +102,9 @@ public class Chord implements Runnable{
         if ((query.id.compareTo(this.me.id) == 0 || query.id.compareTo(this.me.id) == -1) && query.id.compareTo(this.pred.id) == 1) {
             return this.me;
         }
-        
         return null; 
     }
+
 
     public void Join(Message req) {
         if (req.firstReq == true) {
@@ -108,15 +118,24 @@ public class Chord implements Runnable{
             // FWD req to succ;
         }
 
-
         // send successor
-        this.mySender.retLookupRes(Message.getLookupMessage(succ, false), req.sender);
-
+        this.mySender.retLookupRes(Message.getLookupMessage(succ, this.pred, false), req.sender);
     }
 
     public void setSucc(Message req) {
         System.out.println("SETTING SUCCESSOR: " + this.me + " to " + req.successInfo);
         this.succ = req.successInfo;
+        this.pred = req.succPred;
+    }
+
+
+    public void handleNotify(NodeInfo newPred) {
+        this.pred = newPred;
+
+        // SPECIAL CASE WHEN N = 2 
+        if (this.me.id.compareTo(this.succ.id) == 0) {
+            this.succ = newPred;
+        }
     }
 
     public Response Ping(Message req){

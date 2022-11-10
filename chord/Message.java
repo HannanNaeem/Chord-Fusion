@@ -18,9 +18,9 @@ public class Message implements Serializable {
     // Lookup Args
     NodeInfo successInfo;
     Boolean isQuery;
+    NodeInfo succPred;
 
     //SendPred Args
-
     NodeInfo pred;
 
     public static Message getJoinrequest(NodeInfo sender, NodeInfo firstContact, boolean firstReq) {
@@ -33,11 +33,12 @@ public class Message implements Serializable {
         return req;
     }
 
-    public static Message getLookupMessage(NodeInfo successInfo, Boolean isQuery) {
+    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isQuery) {
         Message req = new Message();
         req.msgType = "LOOKUP_RESULT";
         req.successInfo = successInfo;
         req.isQuery = isQuery;
+        req.succPred = succPred;
 
         return req;
     }
@@ -54,6 +55,14 @@ public class Message implements Serializable {
         Message req = new Message();
         req.pred = pred;
         req.msgType = "PONG";
+
+        return req;
+    }
+
+    public static Message getNotifyMessage(NodeInfo self) {
+        Message req = new Message();
+        req.pred = self;
+        req.msgType = "NOTIFY";
 
         return req;
     }

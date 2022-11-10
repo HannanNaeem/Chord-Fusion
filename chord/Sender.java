@@ -21,6 +21,10 @@ public class Sender {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
 
+	public void sendNotify(Message req, NodeInfo recvr) {
+		sendOnSocket("127.0.0.1", recvr.port, req);
+	}
+
 	public void sendOnSocket(String ip, int port, Message msg) {
 		try {
 			Socket recv = new Socket(ip, port);
