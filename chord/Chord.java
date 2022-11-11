@@ -61,7 +61,8 @@ public class Chord implements Runnable{
 
             this.me = new NodeInfo(
                 port,
-                (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, 30))))).intValue());
+                port);
+                // (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, 30))))).intValue());
 
         } catch (NoSuchAlgorithmException e) {
             System.out.println("No Algo Exception");
@@ -88,7 +89,7 @@ public class Chord implements Runnable{
 
     public void isSuccCorrect(NodeInfo sucPredInfo) {
 
-        if (sucPredInfo.id > this.me.id && sucPredInfo.id < this.succ.id) {
+        if (getRelativeVal(sucPredInfo.id, me.id) > 0 && getRelativeVal(succ.id, me.id) > getRelativeVal(sucPredInfo.id, me.id)) {
             System.out.println("I AM NOT THE RIGHT PRED");
             this.succ = sucPredInfo;
         }
@@ -104,7 +105,7 @@ public class Chord implements Runnable{
             return this.me;
         }
 
-        if (query.id == this.succ.id || (query.id < this.succ.id && query.id > this.me.id)) {
+        if (getRelativeVal(query.id, me.id) > 0 && getRelativeVal(succ.id, me.id) > getRelativeVal(query.id, me.id)) {
             return this.succ;
         }
 
@@ -137,7 +138,6 @@ public class Chord implements Runnable{
 
 
     public void handleNotify(NodeInfo newPred) {
-        System.out.println("NOTIFY");
         this.pred = newPred;
 
         // SPECIAL CASE WHEN N = 2 
@@ -156,5 +156,12 @@ public class Chord implements Runnable{
     
     public Response Notify(Message req){
         return new Response();
+    }
+
+    public int getRelativeVal(int x, int y) {
+        int val = x - y;
+        if (val < 0) val += (int) Math.pow(2, 30);
+
+        return val;
     }
 }

@@ -89,10 +89,10 @@ public class ChordTest {
         // Chord second = new Chord("127.0.0.1", 1101, 1100);
         // Chord third = new Chord("127.0.0.1", 1102, 1100);
         
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 20; i++) {
             new Chord("127.0.0.1", 1100 + i, i == 0 ? null : 1100);
             try {
-                Thread.sleep(300);
+                Thread.sleep(0);
             } catch (Exception e){}
         }
 
