@@ -95,7 +95,7 @@ public class ChordTest {
         
         
         try {
-            Thread.sleep(15000);
+            Thread.sleep(20000);
         } catch (Exception e){
 
         }

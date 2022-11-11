@@ -74,8 +74,7 @@ public class Chord implements Runnable{
 
             this.me = new NodeInfo(
                 port,
-                port);
-                // (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE))))).intValue());
+                (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE))))).intValue());
 
         } catch (NoSuchAlgorithmException e) {
             System.out.println("No Algo Exception");
@@ -115,8 +114,18 @@ public class Chord implements Runnable{
         isSuccCorrect(sucPredInfo);
     }
 
-    // public NodeInfo getClosestFinger(NodeInfo query) {
-    // }
+    public NodeInfo getClosestFinger(NodeInfo query) {
+        for (int i = this.fingerTable.length - 1; i >= 0; i--) {
+            if (fingerTable[i] == null) continue;
+
+
+            if (getRelativeVal(me.id, fingerTable[i].id) > 0 && (getRelativeVal(query.id, me.id) > getRelativeVal(fingerTable[i].id, me.id))) {
+                return fingerTable[i];
+            }
+        }
+
+        return fingerTable[0];
+    }
 
     public NodeInfo isMySuccSucc(NodeInfo query) {
         if (me.id == fingerTable[0].id && me.id == pred.id) {
@@ -132,10 +141,12 @@ public class Chord implements Runnable{
 
 
     public void Lookup(Message req) {
-        NodeInfo succ = isMySuccSucc(req.qType == QueryType.JOIN ? req.sender : new NodeInfo(-1, req.key));
+
+        NodeInfo queryNode = req.qType == QueryType.JOIN ? req.sender : new NodeInfo(-1, req.key);
+        NodeInfo succ = isMySuccSucc(queryNode);
 
         if (succ == null) {
-            this.mySender.sendLookupRequest(req, fingerTable[0]);
+            this.mySender.sendLookupRequest(req, this.getClosestFinger(queryNode));
             return;
         }
 
@@ -146,7 +157,6 @@ public class Chord implements Runnable{
         } else if (req.qType == QueryType.JOIN) {
             this.mySender.retLookupRes(Message.getJoinResultMessage(succ, this.me, req.qType), req.sender);
         } else if (req.qType == QueryType.FINDSUC) {
-            System.out.println("LOOKUP KEY: " + req.key + " IDX: " + req.index + " RESULT: " + succ);
             this.mySender.retLookupRes(Message.getFindSuccResultMessage(succ, req.key, req.index), req.sender);
 
         }
@@ -158,7 +168,14 @@ public class Chord implements Runnable{
             System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + " --------------------------");
             this.mySender.retLookupRes(Message.getLookupMessage(fingerTable[0], this.me, msg.qType, result), msg.sender);
         } else {
+            // try {
+                // MessageDigest md = MessageDigest.getInstance("SHA-1");
+                // byte[] messageDigest = md.digest(msg.value.getBytes());
+                // int key = new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE)))).intValue();
             datastore.put(msg.key, msg.value);
+            // } catch (NoSuchAlgorithmException e) {
+            //     e.printStackTrace();
+            // }
         }
     }
 

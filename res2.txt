@@ -1,0 +1,1140 @@
+Stack Overflow
+About
+Products
+For Teams
+
+Log in
+Sign up
+Home
+PUBLIC
+Questions
+Tags
+Users
+Companies
+COLLECTIVES
+Explore Collectives
+TEAMS
+Stack Overflow for Teams – Start collaborating and sharing organizational knowledge. Create a free Team Why Teams?
+File to byte[] in Java
+Ask Question
+Asked 13 years, 6 months ago
+Modified 1 year, 4 months ago
+Viewed 1.3m times
+
+Report this ad
+
+894
+
+
+How do I convert a java.io.File to a byte[]?
+javafile-io
+Share
+Follow
+edited Mar 27, 2014 at 11:32
+Duncan Jones's user avatar
+Duncan Jones
+65.1k2828 gold badges185185 silver badges245245 bronze badges
+asked May 13, 2009 at 16:30
+Ben Noland's user avatar
+Ben Noland
+33.6k1818 gold badges5050 silver badges5151 bronze badges
+One use that I can think of is reading serialized objects from file. – 
+Mahm00d
+ Apr 9, 2014 at 15:34
+2
+Another is to find the file type using the header. – 
+James P.
+ May 11, 2014 at 18:45
+Try This byte[] bytes = null; BufferedInputStream fileInputStream = null; try{File file = new File(filePath); fileInputStream = new BufferedInputStream(new FileInputStream(file)); //fileInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(this.filePath); bytes = new byte[(int) file.length()]; fileInputStream.read(bytes); } catch(FileNotFoundException ex){ throw ex; } – 
+Rohit Chaurasiya
+ Jan 30, 2020 at 7:05
+Add a comment
+27 Answers
+Sorted by:
+
+ 
+1468
+
+
+From JDK 7 you can use Files.readAllBytes(Path).
+
+Example:
+
+import java.io.File;
+import java.nio.file.Files;
+
+File file;
+// ...(file is initialised)...
+byte[] fileContent = Files.readAllBytes(file.toPath());
+Share
+Follow
+edited Aug 3, 2018 at 7:42
+community wiki
+12 revs, 11 users 24%
+Michael Pollmeier
+84
+@aldo.roman.nurena JDK7 introduced a File.toPath() method that will give you a Path Object. – 
+KevinL
+ Oct 30, 2013 at 18:20
+10
+You can get a Path from a File. Try: File file = new File("/path"); Path path = Paths.get(file.getAbsolutePath()); byte[] data = Files.readAllBytes(path); – 
+gfelisberto
+ Dec 28, 2013 at 20:22 
+4
+How is the file closing handled in java.nio - in other words, should the above code close something? – 
+akauppi
+ Nov 20, 2014 at 12:16
+6
+@akauppi See the link in the answer: "The method ensures that the file is closed..." – 
+Bernhard Barker
+ Aug 15, 2015 at 20:50 
+4
+This now works on Android if targeting SDK version 26 and higher. – 
+James Warner
+ Aug 9, 2017 at 14:46
+Show 3 more comments
+
+Report this ad
+ 
+571
+
+
+It depends on what best means for you. Productivity wise, don't reinvent the wheel and use Apache Commons. Which is here FileUtils.readFileToByteArray(File input).
+Share
+Follow
+edited Jul 21, 2020 at 21:27
+LAX1DUDE's user avatar
+LAX1DUDE
+16411 silver badge1515 bronze badges
+answered May 13, 2009 at 16:48
+svachon's user avatar
+svachon
+7,59611 gold badge1717 silver badges1616 bronze badges
+35
+@ymajoros: So true! I'd rather have some extra lines of code than yet another dependency. Dependencies have hidden costs. You need to stay up to date with that library, include the dependency in your build scripting etc, communicate it to people using your code etc etc. If you are already using a library that has code for it than use that, otherwsie I would say write it yourself. – 
+Stijn de Witt
+ Feb 5, 2013 at 12:44
+12
+This answers the question of how to read a file, but not the question of how to convert an object of type java.IO.File to byte[]. – 
+Ingo
+ May 16, 2013 at 9:50
+6
+How is this used to read a File to byte[]? I'm using Java6 so I can't use the NIO methods :( – 
+P A S T R Y
+ Feb 19, 2014 at 9:08
+4
+@ymajoros would you kindly share any "standard 3-lines solution" with us, so we don't have to rely on a reinventing-the-wheel-dependency? – 
+matteo
+ Apr 24, 2014 at 14:38
+3
+@matteo: any? See other answers, e.g. Files.readAllBytes(). Simple, no dependency. – 
+ymajoros
+ Apr 24, 2014 at 21:13
+Show 4 more comments
+ 
+313
+
+
+Since JDK 7 - one liner:
+
+byte[] array = Files.readAllBytes(Paths.get("/path/to/file"));
+No external dependencies needed.
+Share
+Follow
+edited May 14, 2019 at 12:36
+Community's user avatar
+CommunityBot
+111 silver badge
+answered Jul 2, 2015 at 13:47
+Paulius Matulionis's user avatar
+Paulius Matulionis
+22.7k2222 gold badges100100 silver badges142142 bronze badges
+19
+This is now a better choice than the accepted answer, which requires Apache Commons. – 
+james.garriss
+ Sep 15, 2015 at 12:56
+1
+Thanks :) I also needed this one: String text = new String(Files.readAllBytes(new File("/path/to/file").toPath())); which is originally from stackoverflow.com/a/26888713/1257959 – 
+cgl
+Jan 8, 2016 at 20:25 
+9
+In Android, it requires min API level to be 26. – 
+Ashutosh Chamoli
+ Mar 24, 2018 at 6:33
+3
+You'll need to add import java.nio.file.Files; and import java.nio.file.Paths; if you haven't already. – 
+Sam
+ Nov 13, 2019 at 9:42
+this is useful for java8 as well – 
+Mugeesh Husain
+ Feb 9, 2021 at 7:55
+Add a comment
+
+Report this ad
+ 
+171
+
+
+import java.io.RandomAccessFile;
+RandomAccessFile f = new RandomAccessFile(fileName, "r");
+byte[] b = new byte[(int)f.length()];
+f.readFully(b);
+Documentation for Java 8: http://docs.oracle.com/javase/8/docs/api/java/io/RandomAccessFile.html
+Share
+Follow
+edited Jul 19, 2016 at 12:20
+Thomas Mueller's user avatar
+Thomas Mueller
+48k1414 gold badges111111 silver badges130130 bronze badges
+answered Dec 8, 2011 at 13:57
+Dmitry Mitskevich's user avatar
+Dmitry Mitskevich
+4,71822 gold badges1414 silver badges88 bronze badges
+2
+You have to check return value of f.read(). Here can sometimes happen, that you will not read whole file. – 
+bugs_
+ Sep 20, 2012 at 9:40
+8
+Such situation can occur only if file is changing while you are reading it. In all other cases IOException is thrown. To address this problem I suggest to open file in read-write mode: RandomAccessFile(fileName, "rw") – 
+Dmitry Mitskevich
+ Sep 20, 2012 at 10:26
+5
+I could imagine other sources for only reading a portion of the file (File is on a network share ...) readFully() has the contract you're searching for. – 
+DThought
+ May 3, 2013 at 8:08 
+3
+Remember that RandomAccessFile is not thread safe. So, synchronization may be needed in some cases. – 
+bancer
+ May 16, 2013 at 22:57 
+@DmitryMitskevich There are other cases as well, on filesystems that are possibly non-conformat. e.g. reading "files" in /proc/ on linux can cause short reads (i.e. you need a loop to read it all) – 
+nos
+ Nov 12, 2013 at 21:15 
+Show 1 more comment
+ 
+84
+
+
+Basically you have to read it in memory. Open the file, allocate the array, and read the contents from the file into the array.
+
+The simplest way is something similar to this:
+
+public byte[] read(File file) throws IOException, FileTooBigException {
+    if (file.length() > MAX_FILE_SIZE) {
+        throw new FileTooBigException(file);
+    }
+    ByteArrayOutputStream ous = null;
+    InputStream ios = null;
+    try {
+        byte[] buffer = new byte[4096];
+        ous = new ByteArrayOutputStream();
+        ios = new FileInputStream(file);
+        int read = 0;
+        while ((read = ios.read(buffer)) != -1) {
+            ous.write(buffer, 0, read);
+        }
+    }finally {
+        try {
+            if (ous != null)
+                ous.close();
+        } catch (IOException e) {
+        }
+
+        try {
+            if (ios != null)
+                ios.close();
+        } catch (IOException e) {
+        }
+    }
+    return ous.toByteArray();
+}
+This has some unnecessary copying of the file content (actually the data is copied three times: from file to buffer, from buffer to ByteArrayOutputStream, from ByteArrayOutputStream to the actual resulting array).
+
+You also need to make sure you read in memory only files up to a certain size (this is usually application dependent) :-).
+
+You also need to treat the IOException outside the function.
+
+Another way is this:
+
+public byte[] read(File file) throws IOException, FileTooBigException {
+    if (file.length() > MAX_FILE_SIZE) {
+        throw new FileTooBigException(file);
+    }
+
+    byte[] buffer = new byte[(int) file.length()];
+    InputStream ios = null;
+    try {
+        ios = new FileInputStream(file);
+        if (ios.read(buffer) == -1) {
+            throw new IOException(
+                    "EOF reached while trying to read the whole file");
+        }
+    } finally {
+        try {
+            if (ios != null)
+                ios.close();
+        } catch (IOException e) {
+        }
+    }
+    return buffer;
+}
+This has no unnecessary copying.
+
+FileTooBigException is a custom application exception. The MAX_FILE_SIZE constant is an application parameters.
+
+For big files you should probably think a stream processing algorithm or use memory mapping (see java.nio).
+Share
+Follow
+edited Aug 19, 2015 at 13:52
+community wiki
+7 revs, 5 users 71%
+Mihai Toader
+ios needs to be declared outside the try – 
+Daryl Spitzer
+ Nov 11, 2010 at 3:35
+The statement "ios.read(buffer)" in the second example will only read in the first 4096 bytes of the file (assuming same 4k buffer as used in first example). For the second example to work, I think the read has to be inside a while loop that checks the result for -1 (end of file reached). – 
+Stijn de Witt
+ Feb 5, 2013 at 12:48 
+Sorry, dismiss my remark above, missed the statement setting buffer to length of file. Still, I like the first example way more. Reading a whole file into a buffer in one go is not scalable. You will risk sunning out of memory when the file is large. – 
+Stijn de Witt
+ Feb 5, 2013 at 12:51
+The "simplest" way would make use of try-with-resources. – 
+Sina Madani
+ Mar 29, 2016 at 17:49
+Cool, but a little to verbose. – 
+Sapphire_Brick
+ Oct 4, 2019 at 17:25
+Add a comment
+ 
+78
+
+
+As someone said, Apache Commons File Utils might have what you are looking for
+
+public static byte[] readFileToByteArray(File file) throws IOException
+Example use (Program.java):
+
+import org.apache.commons.io.FileUtils;
+public class Program {
+    public static void main(String[] args) throws IOException {
+        File file = new File(args[0]);  // assume args[0] is the path to file
+        byte[] data = FileUtils.readFileToByteArray(file);
+        ...
+    }
+}
+Share
+Follow
+edited Oct 3, 2018 at 21:05
+Palec's user avatar
+Palec
+12k77 gold badges5959 silver badges130130 bronze badges
+answered May 13, 2009 at 17:08
+Tom's user avatar
+Tom
+42.6k2929 gold badges135135 silver badges166166 bronze badges
+Add a comment
+ 
+27
+
+
+If you don't have Java 8, and agree with me that including a massive library to avoid writing a few lines of code is a bad idea:
+
+public static byte[] readBytes(InputStream inputStream) throws IOException {
+    byte[] b = new byte[1024];
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    int c;
+    while ((c = inputStream.read(b)) != -1) {
+        os.write(b, 0, c);
+    }
+    return os.toByteArray();
+}
+Caller is responsible for closing the stream.
+Share
+Follow
+edited Apr 12, 2018 at 19:37
+Oleksandr Pyrohov's user avatar
+Oleksandr Pyrohov
+14.3k55 gold badges5959 silver badges8888 bronze badges
+answered Jul 6, 2016 at 23:06
+Jeffrey Blattman's user avatar
+Jeffrey Blattman
+22k99 gold badges7777 silver badges132132 bronze badges
+Thank you. This is what I need – 
+Nguyen Minh Hien
+ Jul 22, 2020 at 12:19
+Add a comment
+ 
+24
+
+
+You can use the NIO api as well to do it. I could do this with this code as long as the total file size (in bytes) would fit in an int.
+
+File f = new File("c:\\wscp.script");
+FileInputStream fin = null;
+FileChannel ch = null;
+try {
+    fin = new FileInputStream(f);
+    ch = fin.getChannel();
+    int size = (int) ch.size();
+    MappedByteBuffer buf = ch.map(MapMode.READ_ONLY, 0, size);
+    byte[] bytes = new byte[size];
+    buf.get(bytes);
+
+} catch (IOException e) {
+    // TODO Auto-generated catch block
+    e.printStackTrace();
+} finally {
+    try {
+        if (fin != null) {
+            fin.close();
+        }
+        if (ch != null) {
+            ch.close();
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+I think its very fast since its using MappedByteBuffer.
+Share
+Follow
+edited Apr 12, 2018 at 19:39
+Oleksandr Pyrohov's user avatar
+Oleksandr Pyrohov
+14.3k55 gold badges5959 silver badges8888 bronze badges
+answered May 13, 2009 at 16:57
+Amit's user avatar
+Amit
+79511 gold badge66 silver badges1111 bronze badges
+2
+there is absolutely no need to use memory mapping if you are only going to read the file once, and it will end up using twice as much memory as using a normal FileInputStream. – 
+james
+ May 13, 2009 at 17:04
+1
+Unfortunately MappedByteBuffer isn't automatically released. – 
+Tom Hawtin - tackline
+ May 13, 2009 at 17:04
+2
+awesome, the new example includes printStackTrace, classic broken exception handling. – 
+james
+ May 13, 2009 at 17:07
+I agree.. Its the default stuff that eclipse puts in. I think I should rethrow the exception ! – 
+Amit
+ May 13, 2009 at 17:11
+Ive been benchmarking nio in order to create a byte[] from a File. Other than using a direct buffer it does indeed take twice as much memory. Though it is faster for very large files ( about twice as fast as a buffered IO for 200M) it seems to lose out by a factor of 5 for files around 5M. – 
+Chaffers
+ Oct 16, 2014 at 10:32
+Add a comment
+ 
+23
+
+
+// Returns the contents of the file in a byte array.
+    public static byte[] getBytesFromFile(File file) throws IOException {        
+        // Get the size of the file
+        long length = file.length();
+
+        // You cannot create an array using a long type.
+        // It needs to be an int type.
+        // Before converting to an int type, check
+        // to ensure that file is not larger than Integer.MAX_VALUE.
+        if (length > Integer.MAX_VALUE) {
+            // File is too large
+            throw new IOException("File is too large!");
+        }
+
+        // Create the byte array to hold the data
+        byte[] bytes = new byte[(int)length];
+
+        // Read in the bytes
+        int offset = 0;
+        int numRead = 0;
+
+        InputStream is = new FileInputStream(file);
+        try {
+            while (offset < bytes.length
+                   && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                offset += numRead;
+            }
+        } finally {
+            is.close();
+        }
+
+        // Ensure all the bytes have been read in
+        if (offset < bytes.length) {
+            throw new IOException("Could not completely read file "+file.getName());
+        }
+        return bytes;
+    }
+Share
+Follow
+edited Aug 15, 2011 at 16:23
+maaartinus's user avatar
+maaartinus
+43.6k3131 gold badges154154 silver badges316316 bronze badges
+answered May 13, 2009 at 16:32
+Cuga's user avatar
+Cuga
+17.4k3030 gold badges109109 silver badges159159 bronze badges
+Also, put numRead inside the loop. Declare variables in the smallest valid scope you can. Putting it outside the while loop is only necessary to enable that complicated "while" test; it would be better to do the test for EOF inside the loop (and throw an EOFException if it occurs). – 
+erickson
+ May 13, 2009 at 16:50
+throw new IOException("File is too large!"); what should we do when the file is too large? Is there also any example about it? – 
+Fer
+ Feb 25, 2015 at 15:14
+Add a comment
+ 
+23
+
+
+Simple way to do it:
+
+File fff = new File("/path/to/file");
+FileInputStream fileInputStream = new FileInputStream(fff);
+
+// int byteLength = fff.length(); 
+
+// In android the result of file.length() is long
+long byteLength = fff.length(); // byte count of the file-content
+
+byte[] filecontent = new byte[(int) byteLength];
+fileInputStream.read(filecontent, 0, (int) byteLength);
+Share
+Follow
+edited Apr 12, 2018 at 19:33
+Oleksandr Pyrohov's user avatar
+Oleksandr Pyrohov
+14.3k55 gold badges5959 silver badges8888 bronze badges
+answered Feb 23, 2017 at 13:19
+Sudip Bhandari's user avatar
+Sudip Bhandari
+2,01711 gold badge2727 silver badges2323 bronze badges
+There are simpler ways, such as the one-liners that have already been mentioned. – 
+Sapphire_Brick
+ Oct 4, 2019 at 16:02
+1
+@Sapphire_Brick Simpler ways yes - but the one liners don't fit all situations. Such as Android. – 
+Behr
+Apr 14, 2020 at 16:28 
+Add a comment
+ 
+20
+
+
+Simplest Way for reading bytes from file
+
+import java.io.*;
+
+class ReadBytesFromFile {
+    public static void main(String args[]) throws Exception {
+        // getBytes from anyWhere
+        // I'm getting byte array from File
+        File file = null;
+        FileInputStream fileStream = new FileInputStream(file = new File("ByteArrayInputStreamClass.java"));
+
+        // Instantiate array
+        byte[] arr = new byte[(int) file.length()];
+
+        // read All bytes of File stream
+        fileStream.read(arr, 0, arr.length);
+
+        for (int X : arr) {
+            System.out.print((char) X);
+        }
+    }
+}
+Share
+Follow
+edited Apr 12, 2018 at 19:36
+Oleksandr Pyrohov's user avatar
+Oleksandr Pyrohov
+14.3k55 gold badges5959 silver badges8888 bronze badges
+answered Jan 23, 2014 at 8:59
+Muhammad Sadiq's user avatar
+Muhammad Sadiq
+42444 silver badges1010 bronze badges
+1
+I argue on being the "Simplest Way" :) – 
+BlondCode
+ Jul 27, 2017 at 21:16
+Can you explain here ? Why do you have an argue ? – 
+Muhammad Sadiq
+ Jul 28, 2017 at 6:19
+3
+Nothing special, but you say simplest and i see more simple solutions -> in my opinion it is not the simplest. Maybe it was couple of years ago, but world is changing. I would not label my own solutions with such a statement. ;) If only you wrote "In my opinion the simplest is.." or "the most simple i found.." Don't wanna bother you, just thought nice to communicate this. – 
+BlondCode
+ Jul 28, 2017 at 21:59
+@MuhammadSadiq: don't import anything .*, it's considered to be bad practice. – 
+Sapphire_Brick
+Apr 14, 2020 at 17:44
+Add a comment
+ 
+15
+
+
+Guava has Files.toByteArray() to offer you. It has several advantages:
+
+It covers the corner case where files report a length of 0 but still have content
+It's highly optimized, you get a OutOfMemoryException if trying to read in a big file before even trying to load the file. (Through clever use of file.length())
+You don't have to reinvent the wheel.
+Share
+Follow
+answered Apr 17, 2013 at 15:12
+jontejj's user avatar
+jontejj
+2,70011 gold badge2424 silver badges2727 bronze badges
+Add a comment
+ 
+13
+
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+File file = getYourFile();
+Path path = file.toPath();
+byte[] data = Files.readAllBytes(path);
+Share
+Follow
+answered Sep 2, 2016 at 15:55
+BlondCode's user avatar
+BlondCode
+3,81911 gold badge1818 silver badges1818 bronze badges
+What JDK level is this? – 
+Jonathan S. Fisher
+ Jul 9, 2018 at 17:58
+Add a comment
+ 
+12
+
+
+Using the same approach as the community wiki answer, but cleaner and compiling out of the box (preferred approach if you don't want to import Apache Commons libs, e.g. on Android):
+
+public static byte[] getFileBytes(File file) throws IOException {
+    ByteArrayOutputStream ous = null;
+    InputStream ios = null;
+    try {
+        byte[] buffer = new byte[4096];
+        ous = new ByteArrayOutputStream();
+        ios = new FileInputStream(file);
+        int read = 0;
+        while ((read = ios.read(buffer)) != -1)
+            ous.write(buffer, 0, read);
+    } finally {
+        try {
+            if (ous != null)
+                ous.close();
+        } catch (IOException e) {
+            // swallow, since not that important
+        }
+        try {
+            if (ios != null)
+                ios.close();
+        } catch (IOException e) {
+            // swallow, since not that important
+        }
+    }
+    return ous.toByteArray();
+}
+Share
+Follow
+answered Feb 24, 2012 at 13:00
+manmal's user avatar
+manmal
+3,80111 gold badge2929 silver badges4242 bronze badges
+Add a comment
+ 
+9
+
+
+This is one of the simplest way
+
+ String pathFile = "/path/to/file";
+ byte[] bytes = Files.readAllBytes(Paths.get(pathFile ));
+Share
+Follow
+answered Mar 24, 2021 at 9:02
+Sachin Kumar's user avatar
+Sachin Kumar
+95266 silver badges1313 bronze badges
+Add a comment
+ 
+8
+
+
+I belive this is the easiest way:
+
+org.apache.commons.io.FileUtils.readFileToByteArray(file);
+Share
+Follow
+edited Apr 3, 2014 at 12:44
+likeitlikeit's user avatar
+likeitlikeit
+5,48555 gold badges3939 silver badges5656 bronze badges
+answered Apr 3, 2014 at 12:04
+Cristian Tetic's user avatar
+Cristian Tetic
+17522 silver badges22 bronze badges
+8
+there is already an answer with this suggestion from Tom in 2009 – 
+Knut Herrmann
+ Apr 3, 2014 at 12:27
+Add a comment
+ 
+7
+
+
+ReadFully Reads b.length bytes from this file into the byte array, starting at the current file pointer. This method reads repeatedly from the file until the requested number of bytes are read. This method blocks until the requested number of bytes are read, the end of the stream is detected, or an exception is thrown.
+
+RandomAccessFile f = new RandomAccessFile(fileName, "r");
+byte[] b = new byte[(int)f.length()];
+f.readFully(b);
+Share
+Follow
+answered Apr 16, 2015 at 8:13
+Tarun M's user avatar
+Tarun M
+7111 silver badge22 bronze badges
+Add a comment
+ 
+5
+
+
+If you want to read bytes into a pre-allocated byte buffer, this answer may help.
+
+Your first guess would probably be to use InputStream read(byte[]). However, this method has a flaw that makes it unreasonably hard to use: there is no guarantee that the array will actually be completely filled, even if no EOF is encountered.
+
+Instead, take a look at DataInputStream readFully(byte[]). This is a wrapper for input streams, and does not have the above mentioned issue. Additionally, this method throws when EOF is encountered. Much nicer.
+Share
+Follow
+answered Oct 12, 2012 at 21:03
+Laurens Holst's user avatar
+Laurens Holst
+19.3k22 gold badges2828 silver badges3333 bronze badges
+Add a comment
+ 
+4
+
+
+Not only does the following way convert a java.io.File to a byte[], I also found it to be the fastest way to read in a file, when testing many different Java file reading methods against each other:
+
+java.nio.file.Files.readAllBytes()
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
+public class ReadFile_Files_ReadAllBytes {
+  public static void main(String [] pArgs) throws IOException {
+    String fileName = "c:\\temp\\sample-10KB.txt";
+    File file = new File(fileName);
+
+    byte [] fileBytes = Files.readAllBytes(file.toPath());
+    char singleChar;
+    for(byte b : fileBytes) {
+      singleChar = (char) b;
+      System.out.print(singleChar);
+    }
+  }
+}
+Share
+Follow
+answered Apr 9, 2018 at 13:38
+gomisha's user avatar
+gomisha
+2,36133 gold badges2222 silver badges3232 bronze badges
+Add a comment
+ 
+3
+
+
+Let me add another solution without using third-party libraries. It re-uses an exception handling pattern that was proposed by Scott (link). And I moved the ugly part into a separate message (I would hide in some FileUtils class ;) )
+
+public void someMethod() {
+    final byte[] buffer = read(new File("test.txt"));
+}
+
+private byte[] read(final File file) {
+    if (file.isDirectory())
+        throw new RuntimeException("Unsupported operation, file "
+                + file.getAbsolutePath() + " is a directory");
+    if (file.length() > Integer.MAX_VALUE)
+        throw new RuntimeException("Unsupported operation, file "
+                + file.getAbsolutePath() + " is too big");
+
+    Throwable pending = null;
+    FileInputStream in = null;
+    final byte buffer[] = new byte[(int) file.length()];
+    try {
+        in = new FileInputStream(file);
+        in.read(buffer);
+    } catch (Exception e) {
+        pending = new RuntimeException("Exception occured on reading file "
+                + file.getAbsolutePath(), e);
+    } finally {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (Exception e) {
+                if (pending == null) {
+                    pending = new RuntimeException(
+                        "Exception occured on closing file" 
+                             + file.getAbsolutePath(), e);
+                }
+            }
+        }
+        if (pending != null) {
+            throw new RuntimeException(pending);
+        }
+    }
+    return buffer;
+}
+Share
+Follow
+edited May 23, 2017 at 12:26
+Community's user avatar
+CommunityBot
+111 silver badge
+answered May 13, 2009 at 18:09
+Andreas Dolk's user avatar
+Andreas Dolk
+112k1818 gold badges176176 silver badges264264 bronze badges
+Add a comment
+ 
+3
+
+
+public static byte[] readBytes(InputStream inputStream) throws IOException {
+    byte[] buffer = new byte[32 * 1024];
+    int bufferSize = 0;
+    for (;;) {
+        int read = inputStream.read(buffer, bufferSize, buffer.length - bufferSize);
+        if (read == -1) {
+            return Arrays.copyOf(buffer, bufferSize);
+        }
+        bufferSize += read;
+        if (bufferSize == buffer.length) {
+            buffer = Arrays.copyOf(buffer, bufferSize * 2);
+        }
+    }
+}
+Share
+Follow
+answered Nov 12, 2012 at 11:33
+mazatwork's user avatar
+mazatwork
+1,23511 gold badge1313 silver badges2020 bronze badges
+Add a comment
+ 
+3
+
+
+//The file that you wanna convert into byte[]
+File file=new File("/storage/0CE2-EA3D/DCIM/Camera/VID_20190822_205931.mp4"); 
+
+FileInputStream fileInputStream=new FileInputStream(file);
+byte[] data=new byte[(int) file.length()];
+BufferedInputStream bufferedInputStream=new BufferedInputStream(fileInputStream);
+bufferedInputStream.read(data,0,data.length);
+
+//Now the bytes of the file are contain in the "byte[] data"
+Share
+Follow
+answered May 14, 2020 at 4:50
+Usama Mehmood's user avatar
+Usama Mehmood
+7533 bronze badges
+1
+While this code may provide a solution to the question, it's better to add context as to why/how it works. This can help future users learn, and apply that knowledge to their own code. You are also likely to have positive feedback from users in the form of upvotes, when the code is explained. – 
+borchvm
+ May 14, 2020 at 5:53
+Well, that's the important part that i will keep in mind in future posts. Thanks for your useful insights. – 
+Usama Mehmood
+ May 15, 2020 at 21:38
+Add a comment
+ 
+1
+
+
+Another Way for reading bytes from file
+
+Reader reader = null;
+    try {
+        reader = new FileReader(file);
+        char buf[] = new char[8192];
+        int len;
+        StringBuilder s = new StringBuilder();
+        while ((len = reader.read(buf)) >= 0) {
+            s.append(buf, 0, len);
+            byte[] byteArray = s.toString().getBytes();
+        }
+    } catch(FileNotFoundException ex) {
+    } catch(IOException e) {
+    }
+    finally {
+        if (reader != null) {
+            reader.close();
+        }
+    }
+Share
+Follow
+answered Nov 25, 2014 at 10:24
+Muhammad Aamir Ali's user avatar
+Muhammad Aamir Ali
+19.9k1010 gold badges6464 silver badges5656 bronze badges
+don't use hollow catch blocks. it makes debugging hard. – 
+Sapphire_Brick
+ Oct 4, 2019 at 17:26
+Add a comment
+ 
+1
+
+
+Try this :
+
+import sun.misc.IOUtils;
+import java.io.IOException;
+
+try {
+    String path="";
+    InputStream inputStream=new FileInputStream(path);
+    byte[] data=IOUtils.readFully(inputStream,-1,false);
+}
+catch (IOException e) {
+    System.out.println(e);
+}
+Share
+Follow
+edited Apr 14, 2020 at 20:25
+Sapphire_Brick's user avatar
+Sapphire_Brick
+1,4651010 silver badges2525 bronze badges
+answered Feb 4, 2019 at 15:20
+Maifee Ul Asad's user avatar
+Maifee Ul Asad
+3,19244 gold badges3131 silver badges7171 bronze badges
+That requires a particular JRE implementation which will break the app if run on another JRE. – 
+rattaman
+Apr 1, 2019 at 15:42
+2
+little mistake: is IOException and not IOexception, but thanks:) – 
+Matan Marciano
+ Dec 19, 2019 at 20:15
+1
+@MatanMarciano: my bad – 
+Sapphire_Brick
+ Apr 14, 2020 at 17:51
+Add a comment
+ 
+1
+
+
+Can be done as simple as this (Kotlin version)
+
+val byteArray = File(path).inputStream().readBytes()
+EDIT:
+
+I've read docs of readBytes method. It says:
+
+Reads this stream completely into a byte array. Note: It is the caller's responsibility to close this stream.
+So to be able to close the stream, while keeping everything clean, use the following code:
+
+val byteArray = File(path).inputStream().use { it.readBytes() }
+Thanks to @user2768856 for pointing this out.
+Share
+Follow
+edited Sep 14, 2020 at 9:34
+answered Aug 31, 2020 at 12:31
+Tamim Attafi's user avatar
+Tamim Attafi
+2,00622 gold badges1515 silver badges3333 bronze badges
+1
+Use File(path).inputStream().use { it.readBytes() } it will close your stream. – 
+Vlad Sumtsov
+ Sep 10, 2020 at 10:23 
+Add a comment
+ 
+0
+
+
+try this if you have target version less than 26 API
+
+ private static byte[] readFileToBytes(String filePath) {
+
+    File file = new File(filePath);
+    byte[] bytes = new byte[(int) file.length()];
+
+    // funny, if can use Java 7, please uses Files.readAllBytes(path)
+    try(FileInputStream fis = new FileInputStream(file)){
+        fis.read(bytes);
+        return bytes;
+    } catch (FileNotFoundException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return null;
+
+}
+Share
+Follow
+answered Jul 9, 2021 at 16:38
+Mohd Qasim's user avatar
+Mohd Qasim
+68077 silver badges1818 bronze badges
+Add a comment
+ 
+-7
+
+
+In JDK8
+
+Stream<String> lines = Files.lines(path);
+String data = lines.collect(Collectors.joining("\n"));
+lines.close();
+Share
+Follow
+edited Jan 17, 2019 at 16:40
+J-Alex's user avatar
+J-Alex
+6,6151010 gold badges4343 silver badges5959 bronze badges
+answered Jan 17, 2019 at 14:51
+beaucequebec's user avatar
+beaucequebec
+1755 bronze badges
+2
+Read the question my French speaking friend, it asks about converting to a "byte[]" and your answer does not provide that. – 
+Kaiser Keister
+ Mar 5, 2019 at 6:08
+2
+This does not provide an even remote option to answer for converting to byte[] ! – 
+Anddo
+ Apr 7, 2020 at 15:46
+Add a comment
+Highly active question. Earn 10 reputation (not counting the association bonus) in order to answer this question. The reputation requirement helps protect this question from spam and non-answer activity.
+Not the answer you're looking for? Browse other questions tagged javafile-io or ask your own question.
+
+The Overflow Blog
+Five Stack Exchange sites are celebrating their ten year anniversaries in Q4...
+Another hard week in tech (Ep. 505)
+Upcoming Events
+2022 Community Moderator Election
+ends November 22
+Featured on Meta
+Mobile app infrastructure being decommissioned
+The Ask Wizard (2022) has graduated
+Staging Ground Workflow: Canned Comments
+
+Report this ad
+
+Report this ad
+Linked
+
+75
+Elegant way to read file into byte[] array in Java
+73
+how to convert image to byte array in java?
+-1
+How to read bytes from a file to a byte[] array?
+0
+is this correct ? how to load bytes from a file?
+0
+BufferedReader to byte[]
+0
+How to convert .mp4 video to byte array in Java?
+-2
+How to get the byte array from the file path in the array from?
+-1
+How to read a large zip file data in byte array?
+0
+How to read a file using ByteArrayInputStream in java?
+0
+Need help importing a text file into byte[] for JDK 6
+See more linked questions
+Related
+
+7563
+Is Java "pass-by-reference" or "pass-by-value"?
+4014
+Create ArrayList from array
+4331
+Avoiding NullPointerException in Java
+4583
+How do I read / convert an InputStream into a String in Java?
+3981
+How do I generate random integers within a specific range in Java?
+3816
+How do I tell if a file does not exist in Bash?
+3418
+How do I convert a String to an int in Java?
+3637
+How can I create a memory leak in Java?
+3084
+How do I delete a file or folder in Python?
+26722
+Why is processing a sorted array faster than processing an unsorted array?
+Hot Network Questions
+
+Could a moon made of fissile uranium produce enough heat to replace the sun?
+Can you build the surreal numbers as a simple direct limit of ordered fields?
+Does the Satanic Temples new abortion 'ritual' allow abortions under religious freedom?
+Why consume DRIED apricots within 21 days?
+Federal government's power to mandate the sale of specific product
+Can we use "will" to describe future plans?
+What is the earliest science fiction story to depict legal technology?
+Files for molecules to Quantum ESPRESSO
+How did Space Shuttles get off the NASA Crawler?
+How to cut a brick?
+In "Love Among the Ruins", what is 'a carpet'?
+Alien message obscured by cows
+Why is Year-Over-Year (YOY) important?
+Do I need to know every note I am going to sing?
+How can I understand 十二建除择日 in Feng Shui?
+How to notate a "softened" dotted rhythm?
+How can I change the mass of an electron in the hamiltonian on a PySCF calculation?
+What is the difference between the root "hemi" and the root "semi"?
+How can I restore power to a gas-fired water heater protected by a tripped GFCI outlet?
+Why does this picture look so painterly?
+How to scale tikz pictures that include matrices?
+I understand b_ matches beta, but why does it also match alpha?
+Book or short story about a character who is kept alive as a disembodied brain encased in a mechanical device after an accident
+Why would HTST/UHT milk be "unsafe, but not taste bad"?
+ Question feed
+
+STACK OVERFLOW
+
+Questions
+Help
+PRODUCTS
+
+Teams
+Advertising
+Collectives
+Talent
+COMPANY
+
+About
+Press
+Work Here
+Legal
+Privacy Policy
+Terms of Service
+Contact Us
+Cookie Settings
+Cookie Policy
+STACK EXCHANGE NETWORK
+
+Technology
+Culture & recreation
+Life & arts
+Science
+Professional
+Business
+API
+Data
+Blog
+Facebook
+Twitter
+LinkedIn
+Instagram
+Site design / logo © 2022 Stack Exchange Inc; user contributions licensed under CC BY-SA. rev 2022.11.11.43029
