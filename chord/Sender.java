@@ -5,22 +5,27 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class Sender {
-  	public void sendLookupRequest(Message req, NodeInfo recvr) {
+
+	public void sendFindSuccMessage(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
-  	
+
+	public void sendLookupRequest(Message req, NodeInfo recvr) {
+		sendOnSocket("127.0.0.1", recvr.port, req);
+	}
+
 	public void sendCrudMessage(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
-	
+
 	public void retLookupRes(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
-	
+
 	public void ping(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
-	
+
 	public void sendPred(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
@@ -38,9 +43,10 @@ public class Sender {
 			out.close();
 			recv.close();
 		} catch (IOException e) {
-		  System.out.println("Error Sending on port: " + port);
-		  System.exit(1);
+			e.printStackTrace();
+			System.out.println("Error Sending on port: " + port);
+			System.exit(1);
 		}
 	}
-  
+
 }

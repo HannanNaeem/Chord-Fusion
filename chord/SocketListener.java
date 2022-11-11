@@ -38,10 +38,15 @@ public class SocketListener implements Runnable {
 
 				} else if (msg.msgType.equals("LOOKUP_RESULT")) {
 					
-					if (msg.isJoin) parent.setSucc(msg);
-					else {
-						// QUERY RESULT
+					if (msg.qType == QueryType.JOIN) {
+						parent.setSucc(msg);
+
+					}
+					else if (msg.qType == QueryType.QUERY) {
 						parent.handleQueryResult(msg);
+					
+					} else if (msg.qType == QueryType.FINDSUC) {
+						parent.updateFingerTable(msg);
 					}
 				} else if (msg.msgType.equals("PING")) {
 					// System.out.println("PING: FROM " + msg.sender.port + " TO " + parent.me.port);
@@ -53,6 +58,9 @@ public class SocketListener implements Runnable {
 				} else if (msg.msgType.equals("CRUD")) {
 						parent.handleCrudOp(msg);
 				}
+
+				input.close();
+				clientSocket.close();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

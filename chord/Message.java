@@ -7,7 +7,13 @@ import java.io.Serializable;
  * Hint: Make it more generic such that you can use it for each RMI call.
  * Hint: Easier to make each variable public
  */
-public class Message implements Serializable {
+enum QueryType {
+    JOIN,
+    QUERY,
+    FINDSUC
+}
+
+ public class Message implements Serializable {
     static final long serialVersionUID=1L;
     // Join Args
     String msgType;
@@ -15,7 +21,7 @@ public class Message implements Serializable {
     
     // Lookup Args
     NodeInfo successInfo;
-    Boolean isJoin;
+    QueryType qType;
     NodeInfo succPred;
 
     //SendPred Args
@@ -26,46 +32,83 @@ public class Message implements Serializable {
     int key;
     String value;
 
+    //FingerTable Args
 
-    public static Message getJoinMessage(NodeInfo sender, boolean isJoin) {
+    int index;
+
+
+    public static Message getFindSuccMessage(NodeInfo sender, int key, int idx) {
         Message req = new Message();
         req.msgType = "QUERY";
         req.sender = sender;
-        req.isJoin = isJoin;
+        req.qType = QueryType.FINDSUC;
+        req.index = idx;
+        req.key = key;
 
         return req;
     }
 
 
-    public static Message getQueryMessage(NodeInfo sender, boolean isJoin, String opType, int key, String value) {
+    public static Message getJoinMessage(NodeInfo sender) {
+        Message req = new Message();
+        req.msgType = "QUERY";
+        req.sender = sender;
+        req.qType = QueryType.JOIN;
+
+        return req;
+    }
+
+
+    public static Message getQueryMessage(NodeInfo sender, String opType, int key, String value) {
         Message req = new Message();
         req.msgType = "QUERY";
         req.opType = opType;
         req.key = key;
         req.value = value;
         req.sender = sender;
-        req.isJoin = isJoin;
+        req.qType = QueryType.QUERY;
 
         return req;
     }
 
-    public static Message getJoinResultMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isJoin) {
+    public static Message getFindSuccResultMessage(NodeInfo successInfo, int key, int idx) {
+        Message req = new Message();
+        req.msgType = "LOOKUP_RESULT";
+        req.successInfo = successInfo;
+        req.qType = QueryType.FINDSUC;
+        req.key = key;
+        req.index = idx;
+
+        return req;
+    }
+
+    public static Message getJoinResultMessage(NodeInfo successInfo, NodeInfo succPred, QueryType qt) {
         Message req = new Message();
         req.msgType = "LOOKUP_RESULT";
         req.successInfo = successInfo;
         req.succPred = succPred;
-        req.isJoin = isJoin;
+        req.qType = qt;
+
+        return req;
+    }
+    
+    public static Message getSuccResultMessage(NodeInfo successInfo, NodeInfo succPred, QueryType qt) {
+        Message req = new Message();
+        req.msgType = "LOOKUP_RESULT";
+        req.successInfo = successInfo;
+        req.succPred = succPred;
+        req.qType = qt;
 
         return req;
     }
 
-    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isJoin, String value) {
+    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, QueryType qt, String value) {
         Message req = new Message();
         req.msgType = "LOOKUP_RESULT";
         req.value = value;
         req.successInfo = successInfo;
         req.succPred = succPred;
-        req.isJoin = isJoin;
+        req.qType = qt;
 
         return req;
     }
