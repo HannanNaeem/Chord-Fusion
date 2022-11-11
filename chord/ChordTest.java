@@ -89,12 +89,25 @@ public class ChordTest {
         // Chord second = new Chord("127.0.0.1", 1101, 1100);
         // Chord third = new Chord("127.0.0.1", 1102, 1100);
         
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 200; i+=10) {
             new Chord("127.0.0.1", 1100 + i, i == 0 ? null : 1100);
-            try {
-                Thread.sleep(0);
-            } catch (Exception e){}
         }
+        
+        
+        try {
+            Thread.sleep(15000);
+        } catch (Exception e){
+
+        }
+        
+        Chord client = new Chord("127.0.0.1", 3300, null);
+
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "GET", 20, null), new NodeInfo(1110, 1110));
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "PUT", 1105, "HANNAN"), new NodeInfo(1190, 1110));
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "GET", 1115, null), new NodeInfo(1100, 1100));
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "GET", 1140, null), new NodeInfo(1160, 1160));
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "GET", 20000, null), new NodeInfo(1110, 1110));
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, false, "GET", 1105, null), new NodeInfo(1120, 1110));
 
         System.out.println("Passed!");
         while(true){}

@@ -5,7 +5,11 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class Sender {
-  	public void sendJoinRequest(Message req, NodeInfo recvr) {
+  	public void sendLookupRequest(Message req, NodeInfo recvr) {
+		sendOnSocket("127.0.0.1", recvr.port, req);
+	}
+  	
+	public void sendCrudMessage(Message req, NodeInfo recvr) {
 		sendOnSocket("127.0.0.1", recvr.port, req);
 	}
 	

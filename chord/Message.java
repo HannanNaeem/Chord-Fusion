@@ -12,33 +12,60 @@ public class Message implements Serializable {
     // Join Args
     String msgType;
     NodeInfo sender;
-    NodeInfo firstContact;
-    Boolean firstReq;
     
     // Lookup Args
     NodeInfo successInfo;
-    Boolean isQuery;
+    Boolean isJoin;
     NodeInfo succPred;
 
     //SendPred Args
     NodeInfo pred;
 
-    public static Message getJoinrequest(NodeInfo sender, NodeInfo firstContact, boolean firstReq) {
+    //CRUD ARGS
+    String opType;
+    int key;
+    String value;
+
+
+    public static Message getJoinMessage(NodeInfo sender, boolean isJoin) {
         Message req = new Message();
-        req.msgType = "JOIN";
+        req.msgType = "QUERY";
         req.sender = sender;
-        req.firstContact = firstContact;
-        req.firstReq = firstReq;
+        req.isJoin = isJoin;
 
         return req;
     }
 
-    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isQuery) {
+
+    public static Message getQueryMessage(NodeInfo sender, boolean isJoin, String opType, int key, String value) {
+        Message req = new Message();
+        req.msgType = "QUERY";
+        req.opType = opType;
+        req.key = key;
+        req.value = value;
+        req.sender = sender;
+        req.isJoin = isJoin;
+
+        return req;
+    }
+
+    public static Message getJoinResultMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isJoin) {
         Message req = new Message();
         req.msgType = "LOOKUP_RESULT";
         req.successInfo = successInfo;
-        req.isQuery = isQuery;
         req.succPred = succPred;
+        req.isJoin = isJoin;
+
+        return req;
+    }
+
+    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, Boolean isJoin, String value) {
+        Message req = new Message();
+        req.msgType = "LOOKUP_RESULT";
+        req.value = value;
+        req.successInfo = successInfo;
+        req.succPred = succPred;
+        req.isJoin = isJoin;
 
         return req;
     }

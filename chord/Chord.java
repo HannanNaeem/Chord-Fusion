@@ -7,6 +7,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.math.BigInteger;
 import java.io.Serializable;
+import java.util.HashMap;
 
 
 class NodeInfo implements Serializable {
@@ -43,6 +44,8 @@ public class Chord implements Runnable{
     AtomicBoolean dead;
     AtomicBoolean unreliable;
 
+    HashMap<Integer, String> datastore;
+
 
     public Chord(String ip, int port, Integer firstContactPort){
 
@@ -52,6 +55,7 @@ public class Chord implements Runnable{
         mySender = new Sender();
         myPinger = new Ping(this);
         myLsnr = new SocketListener(ip, port, this);
+        datastore = new HashMap<Integer, String>();
 
         // Set Me
         try {
@@ -75,7 +79,7 @@ public class Chord implements Runnable{
             this.succ = new NodeInfo(port, this.me.id);
         } else {
             NodeInfo fc = new NodeInfo(firstContactPort, -1);
-            mySender.sendJoinRequest(Message.getJoinrequest(this.me, fc, true), fc);
+            mySender.sendLookupRequest(Message.getJoinMessage(this.me, true), fc);
         }
 
         new Thread(myLsnr).start();
@@ -100,12 +104,12 @@ public class Chord implements Runnable{
         isSuccCorrect(sucPredInfo);
     }
 
-    public NodeInfo findSuccessor(NodeInfo query) {
+    public NodeInfo isMySuccSucc(NodeInfo query) {
         if (me.id == succ.id && me.id == pred.id) {
             return this.me;
         }
 
-        if (getRelativeVal(query.id, me.id) > 0 && getRelativeVal(succ.id, me.id) > getRelativeVal(query.id, me.id)) {
+        if (getRelativeVal(query.id, me.id) >= 0 && getRelativeVal(succ.id, me.id) > getRelativeVal(query.id, me.id)) {
             return this.succ;
         }
 
@@ -113,21 +117,35 @@ public class Chord implements Runnable{
     }
 
 
-    public void Join(Message req) {
-        if (req.firstReq == true) {
-            req.firstReq = false;
-            // req.firstContact.id = this.me.id;
-        }
-
-        NodeInfo succ = findSuccessor(req.sender);
+    public void Lookup(Message req) {
+        NodeInfo succ = isMySuccSucc(req.isJoin ? req.sender : new NodeInfo(-1, req.key));
 
         if (succ == null) {
-            this.mySender.sendJoinRequest(req, this.succ);
+            this.mySender.sendLookupRequest(req, this.succ);
             return;
         }
 
         // send successor
-        this.mySender.retLookupRes(Message.getLookupMessage(succ, this.me, false), req.sender);
+        if (!req.isJoin) {
+            req.msgType = "CRUD";
+            this.mySender.sendCrudMessage(req, succ);
+        } else {
+            this.mySender.retLookupRes(Message.getJoinResultMessage(succ, this.me, req.isJoin), req.sender);
+        }
+    }
+
+    public void handleCrudOp(Message msg) {
+        if (msg.opType.equals("GET")) {
+            String result = datastore.get(msg.key);
+            System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + " --------------------------");
+            this.mySender.retLookupRes(Message.getLookupMessage(succ, this.me, msg.isJoin, result), msg.sender);
+        } else {
+            datastore.put(msg.key, msg.value);
+        }
+    }
+
+    public void handleQueryResult(Message msg) {
+        System.out.println("----------------------------- ME: " + this.me.id + " GOT RESULT: " + msg.value + " --------------------------");
     }
 
     public void setSucc(Message req) {
@@ -138,24 +156,13 @@ public class Chord implements Runnable{
 
 
     public void handleNotify(NodeInfo newPred) {
-        this.pred = newPred;
+        if ((getRelativeVal(this.me.id, newPred.id) > 0 && getRelativeVal(this.me.id, this.pred.id) > getRelativeVal(this.me.id, newPred.id)) || getRelativeVal(succ.id, pred.id) == 0)
+            this.pred = newPred;
 
         // SPECIAL CASE WHEN N = 2 
         if (this.me.id == this.succ.id) {
             this.succ = newPred;
         }
-    }
-
-    public Response Ping(Message req){
-        return new Response();
-    }
-    
-    public Response Stabilize(Message req){
-        return new Response();
-    }
-    
-    public Response Notify(Message req){
-        return new Response();
     }
 
     public int getRelativeVal(int x, int y) {

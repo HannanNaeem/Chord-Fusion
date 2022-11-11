@@ -33,14 +33,15 @@ public class SocketListener implements Runnable {
 				
 				Message msg = Message.class.cast(input.readObject());
 				
-				if (msg.msgType.equals("JOIN")) {
-					parent.Join(msg);
+				if (msg.msgType.equals("QUERY")) {
+					parent.Lookup(msg);
 
 				} else if (msg.msgType.equals("LOOKUP_RESULT")) {
 					
-					if (!msg.isQuery) parent.setSucc(msg);
+					if (msg.isJoin) parent.setSucc(msg);
 					else {
 						// QUERY RESULT
+						parent.handleQueryResult(msg);
 					}
 				} else if (msg.msgType.equals("PING")) {
 					// System.out.println("PING: FROM " + msg.sender.port + " TO " + parent.me.port);
@@ -49,6 +50,8 @@ public class SocketListener implements Runnable {
 					parent.handlePong(msg.pred);
 				} else if (msg.msgType.equals("NOTIFY")) {
 					parent.handleNotify(msg.pred);
+				} else if (msg.msgType.equals("CRUD")) {
+						parent.handleCrudOp(msg);
 				}
 			}
 		} catch (Exception e) {
