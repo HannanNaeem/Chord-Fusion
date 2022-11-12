@@ -32,8 +32,10 @@ public class Chord implements Runnable{
 
     ReentrantLock mutex;
     String ip;
+    boolean killed;
     
     NodeInfo pred;
+    int pongCount;
 
     NodeInfo me; // my SHA-1
     Sender mySender;
@@ -46,7 +48,12 @@ public class Chord implements Runnable{
     AtomicBoolean dead;
     AtomicBoolean unreliable;
 
-    HashMap<Integer, String> datastore;
+    HashMap<Integer, Integer> datastoreMap;
+    ArrayList<Integer> datastore;
+
+    ArrayList<Integer> fusedData;
+    HashMap<Integer, Integer> fusedIndex;
+
     NodeInfo[] fingerTable;
 
 
@@ -55,12 +62,21 @@ public class Chord implements Runnable{
         this.ip = ip;
         this.pred = null;
 
-        mySender = new Sender();
+        mySender = new Sender(this);
         myPinger = new Ping(this);
+        pongCount = 20;
         myLsnr = new SocketListener(ip, port, this);
-        fingerTableUpdater = new FingerTable(this);
-        datastore = new HashMap<Integer, String>();
+        killed = false;
+        
         fingerTable = new NodeInfo[8];
+        fingerTableUpdater = new FingerTable(this);
+
+        fusedData = new ArrayList<Integer>();
+        fusedIndex = new HashMap<Integer, Integer>();
+
+        datastoreMap = new HashMap<Integer, Integer>();
+        datastore = new ArrayList<Integer>();
+
 
         for (int i = 0; i < 8; i++) {
             fingerTable[i] = null;
@@ -74,7 +90,8 @@ public class Chord implements Runnable{
 
             this.me = new NodeInfo(
                 port,
-                (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE))))).intValue());
+                port);
+                // (new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE))))).intValue());
 
         } catch (NoSuchAlgorithmException e) {
             System.out.println("No Algo Exception");
@@ -111,6 +128,7 @@ public class Chord implements Runnable{
     }
 
     public void handlePong(NodeInfo sucPredInfo) {
+        pongCount = 20;
         isSuccCorrect(sucPredInfo);
     }
 
@@ -164,23 +182,64 @@ public class Chord implements Runnable{
 
     public void handleCrudOp(Message msg) {
         if (msg.opType.equals("GET")) {
-            String result = datastore.get(msg.key);
-            System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + " --------------------------");
+            Integer result = null;
+            Integer idx = datastoreMap.get(msg.key);
+            System.out.println("idx: " + idx);
+            if (idx != null) {
+                result = datastore.get(idx);
+            }
+            System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + ": " + result + " --------------------------");
             this.mySender.retLookupRes(Message.getLookupMessage(fingerTable[0], this.me, msg.qType, result), msg.sender);
         } else {
-            // try {
-                // MessageDigest md = MessageDigest.getInstance("SHA-1");
-                // byte[] messageDigest = md.digest(msg.value.getBytes());
-                // int key = new BigInteger(1, messageDigest).mod(new BigInteger(Integer.toString((int) Math.pow(2, MAX_KEY_SPACE)))).intValue();
-            datastore.put(msg.key, msg.value);
-            // } catch (NoSuchAlgorithmException e) {
-            //     e.printStackTrace();
-            // }
+            System.out.println("----------------------------- ME: " + this.me.id + " PUTTING RESULT: " + msg.key + " VALUE: " + msg.value + " --------------------------");
+            datastore.add(msg.value);
+            datastoreMap.put(msg.key, datastore.size() - 1);
         }
     }
 
     public void handleQueryResult(Message msg) {
         System.out.println("----------------------------- ME: " + this.me.id + " GOT RESULT: " + msg.value + " --------------------------");
+    }
+
+    public void distributeDatastore() {
+        this.mySender.sendDistributeDataMessage(Message.getDistributeDataMessage(this.me, datastore), fingerTable[0]);
+        this.mySender.sendDistributeDataMessage(Message.getDistributeDataMessage(this.me, datastore), this.pred);
+    }
+
+    public void handleDistribute(Message msg) {
+        System.out.println("HANDLE DISTIRBUTE BY: " + msg.sender + " TO: " + this.me);
+        mutex.lock();
+        NodeInfo sender = msg.sender;
+
+        if (sender.id != fingerTable[0].id && sender.id != this.pred.id) {
+            mutex.unlock();
+            return;
+        }
+        
+        if (fusedIndex.keySet().size() == 2) {
+            fusedData = new ArrayList<Integer>();
+            fusedIndex = new HashMap<Integer, Integer>();
+        }
+        
+        if (fusedData.size() == 0) {
+            // Simply copy this array
+            for (Integer d: msg.datastore) {
+                fusedData.add(d);
+            }
+            fusedIndex.put(msg.sender.id, msg.datastore.size() - 1);
+        } else {
+            for (int i = 0; i < msg.datastore.size(); i++) {
+                if (i < fusedData.size()){
+                    int newVal = fusedData.get(i) ^ msg.datastore.get(i);
+                    fusedData.set(i , newVal);
+                } else {
+                    fusedData.add(msg.datastore.get(i));
+                }
+            }
+            fusedIndex.put(msg.sender.id, msg.datastore.size() - 1);
+        }
+        
+        mutex.unlock();
     }
 
     public void setSucc(Message req) {
@@ -209,5 +268,9 @@ public class Chord implements Runnable{
 
     public void updateFingerTable(Message msg) {
         fingerTable[msg.index] = msg.successInfo;
+    }
+
+    public void kill() {
+        this.killed = true;
     }
 }

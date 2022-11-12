@@ -8,7 +8,7 @@ public class FingerTable implements Runnable {
 	}
 
 	public int getIthStart(int id, int i) {
-		int x = (id + (int) Math.pow(2, i)) % 1290;
+		int x = (id + (int) Math.pow(2, i)) % (int) Math.pow(2, Chord.MAX_KEY_SPACE);
 		return x < 1100 ? 1100+x : x;
 	}
 

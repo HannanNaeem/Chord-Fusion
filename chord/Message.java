@@ -1,12 +1,7 @@
 package chord;
 import java.io.Serializable;
+import java.util.ArrayList;
 
-/**
- * Please fill in the data structure you use to represent the request message for each RMI call.
- * Hint: You may need the sequence number for each paxos instance and also you may need proposal number and value.
- * Hint: Make it more generic such that you can use it for each RMI call.
- * Hint: Easier to make each variable public
- */
 enum QueryType {
     JOIN,
     QUERY,
@@ -30,11 +25,15 @@ enum QueryType {
     //CRUD ARGS
     String opType;
     int key;
-    String value;
+    Integer value;
 
     //FingerTable Args
 
     int index;
+
+    // Redundancy Args
+
+    ArrayList<Integer> datastore;
 
 
     public static Message getFindSuccMessage(NodeInfo sender, int key, int idx) {
@@ -59,7 +58,7 @@ enum QueryType {
     }
 
 
-    public static Message getQueryMessage(NodeInfo sender, String opType, int key, String value) {
+    public static Message getQueryMessage(NodeInfo sender, String opType, int key, Integer value) {
         Message req = new Message();
         req.msgType = "QUERY";
         req.opType = opType;
@@ -102,7 +101,7 @@ enum QueryType {
         return req;
     }
 
-    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, QueryType qt, String value) {
+    public static Message getLookupMessage(NodeInfo successInfo, NodeInfo succPred, QueryType qt, Integer value) {
         Message req = new Message();
         req.msgType = "LOOKUP_RESULT";
         req.value = value;
@@ -133,6 +132,15 @@ enum QueryType {
         Message req = new Message();
         req.pred = self;
         req.msgType = "NOTIFY";
+
+        return req;
+    }
+    
+    public static Message getDistributeDataMessage(NodeInfo self, ArrayList<Integer> data) {
+        Message req = new Message();
+        req.sender = self;
+        req.msgType = "DISTRIBUTE";
+        req.datastore = data;
 
         return req;
     }

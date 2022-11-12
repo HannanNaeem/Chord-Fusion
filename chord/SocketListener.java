@@ -29,9 +29,17 @@ public class SocketListener implements Runnable {
 		try {
 			while(true) {
 				Socket clientSocket = server.accept();
+
+				if (parent.killed) {
+					clientSocket.close();
+					continue;
+				}
+
 				ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
 				
 				Message msg = Message.class.cast(input.readObject());
+
+				if (msg == null) continue;
 				
 				if (msg.msgType.equals("QUERY")) {
 					parent.Lookup(msg);
@@ -40,7 +48,6 @@ public class SocketListener implements Runnable {
 					
 					if (msg.qType == QueryType.JOIN) {
 						parent.setSucc(msg);
-
 					}
 					else if (msg.qType == QueryType.QUERY) {
 						parent.handleQueryResult(msg);
@@ -50,6 +57,7 @@ public class SocketListener implements Runnable {
 					}
 				} else if (msg.msgType.equals("PING")) {
 					// System.out.println("PING: FROM " + msg.sender.port + " TO " + parent.me.port);
+					parent.pongCount--;
 					parent.mySender.sendPred(Message.getPongMessage(parent.pred), msg.sender);
 				} else if (msg.msgType.equals("PONG")) {
 					parent.handlePong(msg.pred);
@@ -57,6 +65,8 @@ public class SocketListener implements Runnable {
 					parent.handleNotify(msg.pred);
 				} else if (msg.msgType.equals("CRUD")) {
 						parent.handleCrudOp(msg);
+				} else if (msg.msgType.equals("DISTRIBUTE")) {
+					parent.handleDistribute(msg);
 				}
 
 				input.close();
