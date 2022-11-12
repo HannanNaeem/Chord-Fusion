@@ -22,7 +22,7 @@ public class Ping implements Runnable {
 						// System.out.println("OLD PARENT: " + succId);
 						
 						for (int i = 0; i < parent.fingerTable.length; i++) { 
-							if (parent.fingerTable[i].id != succId) {
+							if (parent.fingerTable[i] != null && parent.fingerTable[i].id != succId ) {
 								parent.fingerTable[0] = parent.fingerTable[i];
 								break;
 							}

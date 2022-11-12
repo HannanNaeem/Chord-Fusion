@@ -257,8 +257,12 @@ public class Chord implements Runnable{
 
     public void handleNotify(NodeInfo newPred) {
         mutex.lock();
+        if (this.pred == null) {
+            this.predPongCount = 5;
+        }
+
         if (this.pred == null || ((getRelativeVal(this.me.id, newPred.id) > 0 && getRelativeVal(this.me.id, this.pred.id) > getRelativeVal(this.me.id, newPred.id)) || getRelativeVal(fingerTable[0].id, pred.id) == 0))
-        this.pred = newPred;
+            this.pred = newPred;
         mutex.unlock();
 
         // SPECIAL CASE WHEN N = 2
