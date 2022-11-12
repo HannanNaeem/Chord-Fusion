@@ -90,22 +90,22 @@ public class ChordTest {
         // Chord second = new Chord("127.0.0.1", 1101, 1100);
         // Chord third = new Chord("127.0.0.1", 1102, 1100);
         Chord[] cs = new Chord[20];
-        for (int i = 0; i < 200; i+=10) {
+        for (int i = 0; i < 100; i+=10) {
             cs[i/10] = new Chord("127.0.0.1", 1100 + i, i == 0 ? null : 1100);
         }
         
         
         try {
-            Thread.sleep(20000);
+            Thread.sleep(10000);
         } catch (Exception e){
 
         }
         
-        Chord client = new Chord("127.0.0.1", 3300, null);
+        // Chord client = new Chord("127.0.0.1", 3300, null);
 
-        for (int i = 0; i < 2000; i+=10) {
-            client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1100 + (i % 200), i), new NodeInfo(1190, 1110));
-        }
+        // for (int i = 0; i < 2000; i+=10) {
+        //     client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1100 + (i % 200), i), new NodeInfo(1190, 1110));
+        // }
         
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 20, null), new NodeInfo(1110, 1110));
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1105, 1231241231), new NodeInfo(1190, 1110));
@@ -113,11 +113,11 @@ public class ChordTest {
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 1140, null), new NodeInfo(1160, 1160));
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 20000, null), new NodeInfo(1110, 1110));
         try {
-            Thread.sleep(5000);
+            Thread.sleep(15000);
         } catch (Exception e){
         }
 
-        cs[10].kill();
+        cs[5].kill();
         
         // for (int i = 0 ; i < 20; i++) {
         //     cs[i].distributeDatastore();

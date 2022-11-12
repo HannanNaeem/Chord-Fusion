@@ -36,6 +36,7 @@ public class Chord implements Runnable{
     
     NodeInfo pred;
     int pongCount;
+    int predPongCount;
 
     NodeInfo me; // my SHA-1
     Sender mySender;
@@ -64,7 +65,8 @@ public class Chord implements Runnable{
 
         mySender = new Sender(this);
         myPinger = new Ping(this);
-        pongCount = 20;
+        pongCount = 5;
+        predPongCount = 5;
         myLsnr = new SocketListener(ip, port, this);
         killed = false;
         
@@ -119,7 +121,7 @@ public class Chord implements Runnable{
 
     public void isSuccCorrect(NodeInfo sucPredInfo) {
 
-        if (getRelativeVal(sucPredInfo.id, me.id) > 0 && getRelativeVal(fingerTable[0].id, me.id) > getRelativeVal(sucPredInfo.id, me.id)) {
+        if (sucPredInfo != null && (getRelativeVal(sucPredInfo.id, me.id) > 0 && getRelativeVal(fingerTable[0].id, me.id) > getRelativeVal(sucPredInfo.id, me.id))) {
             System.out.println("I AM NOT THE RIGHT PRED");
 
             fingerTable[0] = sucPredInfo;
@@ -128,8 +130,12 @@ public class Chord implements Runnable{
     }
 
     public void handlePong(NodeInfo sucPredInfo) {
-        pongCount = 20;
+        pongCount = 5;
         isSuccCorrect(sucPredInfo);
+    }
+
+    public void handlePredPong() {
+        predPongCount = 5;
     }
 
     public NodeInfo getClosestFinger(NodeInfo query) {
@@ -250,8 +256,10 @@ public class Chord implements Runnable{
 
 
     public void handleNotify(NodeInfo newPred) {
-        if ((getRelativeVal(this.me.id, newPred.id) > 0 && getRelativeVal(this.me.id, this.pred.id) > getRelativeVal(this.me.id, newPred.id)) || getRelativeVal(fingerTable[0].id, pred.id) == 0)
-            this.pred = newPred;
+        mutex.lock();
+        if (this.pred == null || ((getRelativeVal(this.me.id, newPred.id) > 0 && getRelativeVal(this.me.id, this.pred.id) > getRelativeVal(this.me.id, newPred.id)) || getRelativeVal(fingerTable[0].id, pred.id) == 0))
+        this.pred = newPred;
+        mutex.unlock();
 
         // SPECIAL CASE WHEN N = 2
         if (this.me.id == fingerTable[0].id) {

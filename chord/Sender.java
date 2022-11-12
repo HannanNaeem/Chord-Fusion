@@ -53,18 +53,6 @@ public class Sender {
 			out.close();
 			recv.close();
 		} catch (IOException e) {
-			// e.printStackTrace();
-			if (parent.pongCount < 0) {
-				System.out.println("START RECOVERY");
-				// FOR THIS TO WORK, PING PRED PERIODICALLY TO SEE IF DEAD
-				int succId = parent.fingerTable[0].id;
-				for (int i = 0; i < parent.fingerTable.length; i++) { 
-					if (parent.fingerTable[i].id != succId) {
-						parent.fingerTable[0] = parent.fingerTable[i];
-						break;
-					}
-				}
-			}
 			System.out.println("Error Sending on port: " + port);
 		}
 	}

@@ -35,6 +35,9 @@ enum QueryType {
 
     ArrayList<Integer> datastore;
 
+    // PING
+    boolean isPred;
+
 
     public static Message getFindSuccMessage(NodeInfo sender, int key, int idx) {
         Message req = new Message();
@@ -112,18 +115,20 @@ enum QueryType {
         return req;
     }
     
-    public static Message getPingMessage(NodeInfo sender) {
+    public static Message getPingMessage(NodeInfo sender, boolean isPred) {
         Message req = new Message();
         req.sender = sender;
         req.msgType = "PING";
+        req.isPred = isPred;
 
         return req;
     }
     
-    public static Message getPongMessage(NodeInfo pred) {
+    public static Message getPongMessage(NodeInfo pred, boolean isPred) {
         Message req = new Message();
         req.pred = pred;
         req.msgType = "PONG";
+        req.isPred = isPred;
 
         return req;
     }
