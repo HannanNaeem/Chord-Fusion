@@ -39,6 +39,38 @@ enum QueryType {
     boolean isPred;
 
 
+    public static Message getRecordPutMessage(NodeInfo sender, int key, int idx, int value) {
+        Message req = new Message();
+        req.sender = sender;
+        req.msgType = "RECORD_PUT";
+        req.index = idx;
+        req.key = key;
+        req.value = value;
+
+        return req;
+    }
+
+
+    public static Message getRecoveryResMessage(int key, int idx, ArrayList<Integer> datastore) {
+        Message req = new Message();
+        req.msgType = "RECOVERY_RES";
+        req.index = idx;
+        req.key = key;
+        req.datastore = datastore;
+
+        return req;
+    }
+
+    public static Message getRecoverMessage(NodeInfo sender, int key, int idx) {
+        Message req = new Message();
+        req.sender = sender;
+        req.msgType = "RECOVERY_QUERY";
+        req.index = idx;
+        req.key = key;
+
+        return req;
+    }
+
     public static Message getFindSuccMessage(NodeInfo sender, int key, int idx) {
         Message req = new Message();
         req.msgType = "QUERY";

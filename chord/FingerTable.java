@@ -17,7 +17,7 @@ public class FingerTable implements Runnable {
 		int i = 1;
 		while (true) {
 			try {
-				Thread.sleep(4000);
+				Thread.sleep(3000);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

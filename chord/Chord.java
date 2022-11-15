@@ -9,6 +9,11 @@ import java.math.BigInteger;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
+
 
 class NodeInfo implements Serializable {
     static final long serialVersionUID=1L;
@@ -26,7 +31,7 @@ class NodeInfo implements Serializable {
     }
 }
 
-public class Chord implements Runnable{
+public class Chord implements Runnable, ChordRMI {
 
     public static final int MAX_KEY_SPACE = 30;
 
@@ -38,6 +43,8 @@ public class Chord implements Runnable{
     int pongCount;
     int predPongCount;
 
+    ArrayList<Message> pendingReqs;
+
     NodeInfo me; // my SHA-1
     Sender mySender;
     Ping myPinger;
@@ -45,6 +52,7 @@ public class Chord implements Runnable{
     FingerTable fingerTableUpdater;
     
     Registry registry;
+    ChordRMI stub;
 
     AtomicBoolean dead;
     AtomicBoolean unreliable;
@@ -65,8 +73,9 @@ public class Chord implements Runnable{
 
         mySender = new Sender(this);
         myPinger = new Ping(this);
-        pongCount = 5;
-        predPongCount = 5;
+        pongCount = 3;
+        predPongCount = 3;
+        pendingReqs = new ArrayList<Message>();
         myLsnr = new SocketListener(ip, port, this);
         killed = false;
         
@@ -99,6 +108,16 @@ public class Chord implements Runnable{
             System.out.println("No Algo Exception");
         }
 
+         // register peers, do not modify this part
+         try{
+            System.setProperty("java.rmi.server.hostname", "127.0.0.1");
+            registry = LocateRegistry.createRegistry(port + 1000);
+            stub = (ChordRMI) UnicastRemoteObject.exportObject(this, port + 1000);
+            registry.rebind("Chord", stub);
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+
         this.mutex = new ReentrantLock();
 
         if (firstContactPort == null) {
@@ -118,6 +137,25 @@ public class Chord implements Runnable{
     public void run(){
     }
 
+    public Message Call(String rmi, Message req, int id){
+        Message callReply = null;
+
+        ChordRMI stub;
+        try{
+            Registry registry=LocateRegistry.getRegistry(id + 1000);
+            stub=(ChordRMI) registry.lookup("Chord");
+            if(rmi.equals("GetRecoveryArray")) 
+                callReply = stub.GetRecoveryArray(req);
+            else if(rmi.equals("RecordPut")) 
+                stub.RecordPut(req);
+            else
+                System.out.println("INVALID RMI: " + rmi);
+        } catch(Exception e){
+            return null;
+        }
+        return callReply;
+    }
+
 
     public void isSuccCorrect(NodeInfo sucPredInfo) {
 
@@ -130,12 +168,12 @@ public class Chord implements Runnable{
     }
 
     public void handlePong(NodeInfo sucPredInfo) {
-        pongCount = 5;
+        pongCount = 3;
         isSuccCorrect(sucPredInfo);
     }
 
     public void handlePredPong() {
-        predPongCount = 5;
+        predPongCount = 3;
     }
 
     public NodeInfo getClosestFinger(NodeInfo query) {
@@ -170,7 +208,7 @@ public class Chord implements Runnable{
         NodeInfo succ = isMySuccSucc(queryNode);
 
         if (succ == null) {
-            this.mySender.sendLookupRequest(req, this.getClosestFinger(queryNode));
+            this.mySender.sendLookupRequest(req, this.fingerTable[0]);
             return;
         }
 
@@ -186,20 +224,66 @@ public class Chord implements Runnable{
         }
     }
 
+    public void checkFusedMap(Message msg) {
+        System.out.println("Checking fused map!");
+
+        ArrayList<Integer> fusedVals = new ArrayList<Integer>(fusedIndex.keySet()); // [1231241532, 152134124125]
+
+        int nodeA = fusedVals.get(0);
+        int nodeB = fusedVals.get(1);
+
+        Integer pred = null;
+
+        try {
+            if (getRelativeVal(nodeA, this.me.id) > 0 && getRelativeVal(nodeA, this.me.id) > getRelativeVal(nodeA, nodeB)) {
+                pred = nodeA;
+                Message recMsg = Call("GetRecoveryArray", Message.getRecoverMessage(me, nodeB, pendingReqs.size()), this.fingerTable[0].port);
+                System.out.println(recMsg.datastore.toString() + "RESULT");
+            } else {
+                pred = nodeB;
+                Message recMsg = Call("GetRecoveryArray", Message.getRecoverMessage(me, nodeA, pendingReqs.size()), this.fingerTable[0].port);
+                Integer result = fusedData.get(msg.key % 10) ^ recMsg.datastore.get(msg.key % 10);
+                System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + ": " + result + " --------------------------");
+                this.mySender.retLookupRes(Message.getLookupMessage(fingerTable[0], this.me, msg.qType, result), msg.sender);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        pendingReqs.add(msg);
+
+        
+
+        System.out.println("FOUND PRED WHICH MIGHT HAVE RESULT: " + pred);
+
+    }
+
     public void handleCrudOp(Message msg) {
         if (msg.opType.equals("GET")) {
             Integer result = null;
             Integer idx = datastoreMap.get(msg.key);
-            System.out.println("idx: " + idx);
+
             if (idx != null) {
                 result = datastore.get(idx);
+            } else {
+                checkFusedMap(msg);
+                return;
             }
+            
+
+
             System.out.println("----------------------------- ME: " + this.me.id + " SENDING RESULT: " + msg.key + ": " + result + " --------------------------");
             this.mySender.retLookupRes(Message.getLookupMessage(fingerTable[0], this.me, msg.qType, result), msg.sender);
         } else {
-            System.out.println("----------------------------- ME: " + this.me.id + " PUTTING RESULT: " + msg.key + " VALUE: " + msg.value + " --------------------------");
+            mutex.lock();
             datastore.add(msg.value);
-            datastoreMap.put(msg.key, datastore.size() - 1);
+            int loc = datastore.size() - 1;
+            datastoreMap.put(msg.key, loc);
+            mutex.unlock();
+            
+            System.out.println("----------------------------- ME: " + this.me.id + " PUTTING RESULT: " + msg.key + " VALUE: " + msg.value + " at LOC: "+ loc + " --------------------------");
+            Call("RecordPut", Message.getRecordPutMessage(this.me, msg.key, loc, msg.value), this.fingerTable[0].port);
+            Call("RecordPut", Message.getRecordPutMessage(this.me, msg.key, loc, msg.value), this.pred.port);
         }
     }
 
@@ -258,7 +342,7 @@ public class Chord implements Runnable{
     public void handleNotify(NodeInfo newPred) {
         mutex.lock();
         if (this.pred == null) {
-            this.predPongCount = 5;
+            this.predPongCount = 3;
         }
 
         if (this.pred == null || ((getRelativeVal(this.me.id, newPred.id) > 0 && getRelativeVal(this.me.id, this.pred.id) > getRelativeVal(this.me.id, newPred.id)) || getRelativeVal(fingerTable[0].id, pred.id) == 0))
@@ -284,5 +368,35 @@ public class Chord implements Runnable{
 
     public void kill() {
         this.killed = true;
+    }
+
+
+    public Message GetRecoveryArray(Message req) throws RemoteException {
+        if (req.key == this.me.id) 
+            return Message.getRecoveryResMessage(req.key, req.index, this.datastore);
+        
+        return null;
+    }
+    
+    public void RecordPut(Message req) throws RemoteException {
+        mutex.lock();
+
+        if ((fusedData.size()) > req.index) {
+            if (fusedData.get(req.index) == null)  {
+                fusedData.set(req.index, req.value);
+            } else {
+                if ((fusedData.get(req.index) - req.value) % 10 != 0) System.out.println("INCORREC FUSION: " + fusedData.get(req.index) +  " ^ " + req.value + " at: " + req.index);
+                fusedData.set(req.index, fusedData.get(req.index) ^ req.value);
+            }
+        } else {
+            for (int i = fusedData.size(); i < req.index; i++) {
+                fusedData.add(null);
+            }
+            fusedData.add(req.value);
+            
+        }
+
+        fusedIndex.put(req.sender.id, Math.max(req.index, fusedIndex.getOrDefault(req.sender.id, 0)));
+        mutex.unlock();
     }
 }

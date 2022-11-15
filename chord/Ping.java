@@ -17,7 +17,7 @@ public class Ping implements Runnable {
 						System.out.println("SUCC DEAD!");
 						System.out.println("START RECOVERY");
 						int succId = parent.fingerTable[0].id;
-
+						
 						// System.out.println("ME: " + parent.me);
 						// System.out.println("OLD PARENT: " + succId);
 						
@@ -36,7 +36,7 @@ public class Ping implements Runnable {
 						parent.pred = null;
 					} 
 					parent.mutex.unlock();
-					System.out.println("====== " + (parent.pred != null ? parent.pred.id : null) + " -> " + parent.me.id + " -> " + parent.fingerTable[0].id + " =======");
+					// System.out.println("====== " + (parent.pred != null ? parent.pred.id : null) + " -> " + parent.me.id + " -> " + parent.fingerTable[0].id + " =======");
 					// System.out.println("====== " + parent.me + " FTABLE: " + Arrays.toString(parent.fingerTable) + " =======");
 					parent.pongCount--;
 					parent.mySender.ping(Message.getPingMessage(parent.me, false), parent.fingerTable[0]);
@@ -46,7 +46,7 @@ public class Ping implements Runnable {
 					}
 				}
 
-				Thread.sleep(2000);
+				Thread.sleep(1000);
 			} catch (Exception e) {
 				System.out.println("Ping Failed");
 			}

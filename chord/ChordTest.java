@@ -96,37 +96,45 @@ public class ChordTest {
         
         
         try {
-            Thread.sleep(10000);
+            Thread.sleep(12000);
         } catch (Exception e){
 
         }
         
-        // Chord client = new Chord("127.0.0.1", 3300, null);
+        Chord client = new Chord("127.0.0.1", 3300, null);
 
-        // for (int i = 0; i < 2000; i+=10) {
-        //     client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1100 + (i % 200), i), new NodeInfo(1190, 1110));
-        // }
+        for (int i = 0; i < 100; i+=10) {
+            for (int j = 0; j < 10; j++) {
+                client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1100 + i + j, i + j), new NodeInfo(1130, 1130));
+            }
+        }
         
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 20, null), new NodeInfo(1110, 1110));
-        // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "PUT", 1105, 1231241231), new NodeInfo(1190, 1110));
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 1115, null), new NodeInfo(1100, 1100));
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 1140, null), new NodeInfo(1160, 1160));
         // client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 20000, null), new NodeInfo(1110, 1110));
+        try {
+            Thread.sleep(10000);
+        } catch (Exception e){
+        }
+        
+        
+        // for (int i = 0 ; i < 10; i++) {
+        //     cs[i].distributeDatastore();
+        // }
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e){
+        }
+        
+        cs[5].kill();
+        
         try {
             Thread.sleep(15000);
         } catch (Exception e){
         }
 
-        cs[5].kill();
-        
-        // for (int i = 0 ; i < 20; i++) {
-        //     cs[i].distributeDatastore();
-        // }
-        // try {
-        //     Thread.sleep(2000);
-        // } catch (Exception e){
-        // }
-
+        client.mySender.sendLookupRequest(Message.getQueryMessage(client.me, "GET", 1145, null), new NodeInfo(1110, 1110));
         // for (int i = 1 ; i < 19; i++) {
         //     ArrayList<Integer> fd = cs[i].fusedData;
         //     ArrayList<Integer> A = cs[i - 1].datastore;
