@@ -1,0 +1,5 @@
+#!/bin/bash
+for i in `seq 50 50 1000` ; do
+    javac Fusion.java && java -Xmx8g Fusion $i >> out.out
+    echo $i
+done

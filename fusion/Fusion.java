@@ -2,6 +2,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.ByteBuffer;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Random;
 
 public class Fusion {
 
@@ -76,28 +81,96 @@ public class Fusion {
 		return xorArr;
 	}
 
+
+
 	public static void main(String... args) {
 		try {
-			byte[] f1 = Files.readAllBytes(Paths.get("../res.txt"));
-			byte[] f2 = Files.readAllBytes(Paths.get("../res2.txt"));
+			// get all files in dir
+		
+			final File folder = new File ("../testFiles/");
+			ArrayList<byte[]> ttl = new ArrayList<byte[]>();
+			ArrayList<byte[]> songs1List = new ArrayList<byte[]>();
+			ArrayList<byte[]> songs2List = new ArrayList<byte[]>();
+			int fusedCap = Integer.parseInt(args[0]);
 
-			System.out.println(f1.length);
-			System.out.println(f2.length);
-			f1 = addSizeToArr(f1);
-			f2 = addSizeToArr(f2);
+			System.out.println(fusedCap);
 
-			byte[] padF1 = padArr(f1, f2.length);
-			byte[] padF2 = padArr(f2, f1.length);
+			for (final File f : folder.listFiles()){
+				ttl.add(Files.readAllBytes(Paths.get("../testFiles/" + f.getName())));
+			} 
 
-			byte[] fused = xorArrs(padF1, padF2);
+			int currCap = 50;
+			Random r = new Random();
+			
+			for(; currCap <= fusedCap; currCap += 50){
+
+				int counter = 0;
+				for (final byte[] f : ttl){
+					// System.out.println(f.getName());		
+					int result = r.nextInt(100);
+					if ((result % 2 == 0 && songs1List.size() < currCap) || (songs2List.size() >= currCap)) 
+						songs1List.add(f);
+					else
+						songs2List.add(f);
+	
+					counter++;
+				}
+				
 
 
-			byte[] out = removePadding(xorArrs(fused, padF2));
+				// fuse and store and get size
 
-			Files.write(Paths.get("../out.txt"), out);
+
+			}
+			// System.out.println("list 1 size: " + songs1List.size());
+			// System.out.println("list 2 size: " +songs2List.size());
+			
+		// 	// sorting on size
+			Collections.sort(songs1List, new Comparator<byte[]>(){
+				@Override
+				public int compare(byte[] lhs, byte[] rhs){
+					return lhs.length < rhs.length ? -1 : lhs.length == rhs.length ? 0 : 1;
+				}
+			});
+
+			Collections.sort(songs2List, new Comparator<byte[]>(){
+				@Override
+				public int compare(byte[] lhs, byte[] rhs){
+					return lhs.length < rhs.length ? -1 : lhs.length == rhs.length ? 0 : 1;
+				}
+			});
+
+			long fusedSize = 0;
+			long repSize = 0;
+
+			for (int i = 0; i < songs1List.size(); i++ ){
+				
+				byte[] f1 = addSizeToArr(songs1List.get(i));
+				byte[] f2 = addSizeToArr(songs2List.get(i));
+	
+				byte[] padF1 = padArr(f1, f2.length);
+				byte[] padF2 = padArr(f2, f1.length);
+	
+				byte[] fused = xorArrs(padF1, padF2);
+
+				fusedSize += fused.length;
+				repSize += songs1List.get(i).length + songs2List.get(i).length;
+	
+				// System.out.println("Fused size: " + fused.length);
+	
+				// byte[] out = removePadding(xorArrs(fused, padF1));
+	
+				// Files.write(Paths.get("../fusedFiles/out" + i + ".mp3"), fused);
+				// Files.write(Paths.get("../replicas/outA" + i + ".mp3"), songs1List.get(i));
+				// Files.write(Paths.get("../replicas/outB" + i + ".mp3"), songs2List.get(i));
+				// System.out.println("Written: " +"../fusedFiles/out" + i + ".mp3" );
+			}
+			System.out.println("Fused size: " + fusedSize/ Math.pow(2,20));
+			System.out.println("Replicas size: " + repSize/ Math.pow(2,20));			
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 	}
 }
